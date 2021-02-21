@@ -1,41 +1,25 @@
-var express = require("express"),
+const express = require("express"),
     methodOverride = require("method-override"),
     expressSanitizer = require("express-sanitizer"),
     app = express(),
     bodyParser = require("body-parser"),
     mongoose = require("mongoose");
 
+require('dotenv').config();
 
+const Blog = require("./schema/blog");
 
-mongoose.connect("mongodb://localhost/restful_blog_app", { useUnifiedTopology: true, useNewUrlParser: true });
+mongoose.connect(process.env.MONGO_DB_URL, { useUnifiedTopology: true, useNewUrlParser: true });
 
 //APP CONFIG
-// Mongo Path -> mongod --dbpath=/home/mike/data
 app.set("view engine", "ejs");
 app.use(express.static("public"));
 app.use(bodyParser.urlencoded({ extended: true }))
-// Avoid running malicious code?
+// Avoid running malicious code
 app.use(expressSanitizer());
 //Useful to follow the Rest pattern with update (PUT) and delete (-).
-app.use(methodOverride("_method"));  
+app.use(methodOverride("_method"));
 
-// Mongoose / Schema creation
-var schema = new mongoose.Schema({
-    title: String,
-    image: String,
-    body: String,
-    created: { type: Date, default: Date.now }
-});
-
-// Mongoose / model config
-var Blog = mongoose.model("Blog", schema);
-
-/* Blog.create({
-    title: "Test Blog",
-    image: "https://images.pexels.com/photos/4048182/pexels-photo-4048182.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
-    body: "This is a test blog:D"
-
-}); */
 
 // RESTFULL ROUTES
 app.get("/", function (req, res) {
@@ -54,60 +38,60 @@ app.get("/blogs", function (req, res) {
 });
 
 //New Route
-app.get("/blogs/new", function(req, res){
+app.get("/blogs/new", function (req, res) {
     res.render("new");
 });
 
 //Create Route
-app.post("/blogs", function(req, res){
+app.post("/blogs", function (req, res) {
     //console.log(req.body.blog);
     req.body.blog.body = req.sanitize(req.body.blog.body);
     //console.log(req.body.blog);
     //Create blog
-    Blog.create(req.body.blog, function(error, newBlog){
-        if(error){
+    Blog.create(req.body.blog, function (error, newBlog) {
+        if (error) {
             console.log("There is an error");
             res.render("new");
-        //Redirect to the index
+            //Redirect to the index
         } else {
             res.redirect("/blogs");
         }
     });
-    
+
 });
 
 //Show Route
-app.get("/blogs/:id", function (req,res) {
-    Blog.findById(req.params.id, function (error, foundBlog){
+app.get("/blogs/:id", function (req, res) {
+    Blog.findById(req.params.id, function (error, foundBlog) {
         if (error) {
             console.log("Error route");
             res.redirect("/blogs");
         } else {
-            res.render("show", {blog: foundBlog});
+            res.render("show", { blog: foundBlog });
         }
     });
 });
 
 //Edit Route
-app.get("/blogs/:id/edit", function (req,res) {
-    Blog.findById(req.params.id, function(error, foundBlog){
-        if(error) {
+app.get("/blogs/:id/edit", function (req, res) {
+    Blog.findById(req.params.id, function (error, foundBlog) {
+        if (error) {
             res.redirect("/blogs");
         } else {
-            res.render("edit", {blog: foundBlog});
+            res.render("edit", { blog: foundBlog });
         }
     });
 });
 
 //Update Route
-app.put("/blogs/:id", function(req, res){
+app.put("/blogs/:id", function (req, res) {
     // Blog.findByIdAndUpdate(id, data, callbackF())
     //console.log(req.body.blog);
     req.body.blog.body = req.sanitize(req.body.blog.body);
     //console.log(req.body.blog);
-    Blog.findByIdAndUpdate( req.params.id, req.body.blog, function(error, updatedBlog) {
+    Blog.findByIdAndUpdate(req.params.id, req.body.blog, function (error, updatedBlog) {
         //id = 5ebeeca99bd2be47ef27c6b3
-        if(error){
+        if (error) {
             res.redirect("/blogs");
             console.log(error);
         } else {
@@ -117,10 +101,10 @@ app.put("/blogs/:id", function(req, res){
 });
 
 //Delete Route
-app.delete("/blogs/:id", function(req, res){
+app.delete("/blogs/:id", function (req, res) {
     //Destroy blog
-    Blog.findByIdAndRemove(req.params.id, function(error, _){
-        if(error) {
+    Blog.findByIdAndRemove(req.params.id, function (error, _) {
+        if (error) {
             res.redirect("/blogs");
         } else {
             res.redirect("/blogs");
