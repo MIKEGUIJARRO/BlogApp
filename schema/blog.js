@@ -1,3 +1,5 @@
+const mongoose = require("mongoose");
+
 // Mongoose / Schema creation
 var schema = new mongoose.Schema({
     title: String,
